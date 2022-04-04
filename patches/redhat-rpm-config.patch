@@ -1,0 +1,65 @@
+diff --git a/macros b/macros
+index 00188d6..5d6ef89 100644
+--- a/macros
++++ b/macros
+@@ -39,7 +39,10 @@
+   CXXFLAGS="${CXXFLAGS:-%optflags}" ; export CXXFLAGS ; \
+   FFLAGS="${FFLAGS:-%optflags -I%_fmoddir}" ; export FFLAGS ; \
+   FCFLAGS="${FCFLAGS:-%optflags -I%_fmoddir}" ; export FCFLAGS ; \
+-  LDFLAGS="${LDFLAGS:-%__global_ldflags}"; export LDFLAGS; \
++  LDFLAGS="${LDFLAGS:-%__global_ldflags}"; export LDFLAGS ; \
++  LT_SYS_LIBRARY_PATH="${LT_SYS_LIBRARY_PATH:-%_libdir:}" ; export LT_SYS_LIBRARY_PATH ; \
++  CC="${CC:-gcc}" ; export CC ; \
++  CXX="${CXX:-g++}" ; export CXX; \
+   [ "%_libtool_ppc64le_fix" == 1 ] && [ "%_arch" == ppc64le ] && /usr/lib/rpm/redhat/libtool-handle-ppc64le.sh ; \
+   for i in $(find . -name config.guess -o -name config.sub) ; do \
+       [ -f /usr/lib/rpm/redhat/$(basename $i) ] && %{__rm} -f $i && %{__cp} -fv /usr/lib/rpm/redhat/$(basename $i) $i ; \
+@@ -183,10 +186,11 @@ package or when debugging this package.\
+ %__find_provides        /usr/lib/rpm/redhat/find-provides
+ %__find_requires        /usr/lib/rpm/redhat/find-requires
+ 
+-%_hardening_cflags	-specs=/usr/lib/rpm/redhat/redhat-hardened-cc1
+-%_hardening_ldflags	-specs=/usr/lib/rpm/redhat/redhat-hardened-ld
++%_hardening_cflags	-specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -fstack-protector-strong
++%_hardening_ldflags	-Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld
+ 
+-#_hardened_build	0
++# Use "%undefine _hardened_build" to disable.
++%_hardened_build	1
+ %_hardened_cflags	%{?_hardened_build:%{_hardening_cflags}}
+ %_hardened_ldflags	%{?_hardened_build:%{_hardening_ldflags}}
+ 
+@@ -197,8 +201,8 @@ if string.find(tcpu, "^ppc64") then\
+     print("-O3")\
+ end}}
+ 
+-%__global_cflags	-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches %{_hardened_cflags} %{_performance_cflags}
+-%__global_ldflags	-Wl,-z,relro %{_hardened_ldflags}
++%__global_cflags	-O2 -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS %{_hardened_cflags} %{_performance_cflags}
++%__global_ldflags	-Wl,-z,relro -Wl,--as-needed %{_hardened_ldflags}
+ 
+ # Use these macros to differentiate between RH and other KMP implementation(s).
+ %global redhat_kernel_module_package	1
+diff --git a/rpmrc b/rpmrc
+index 6560e0d..0fa74f1 100644
+--- a/rpmrc
++++ b/rpmrc
+@@ -1,12 +1,12 @@
+ include: /usr/lib/rpm/rpmrc
+ 
+-optflags: i386 %{__global_cflags} -m32 -march=i386 -mtune=generic -fasynchronous-unwind-tables
+-optflags: i486 %{__global_cflags} -m32 -march=i486 -fasynchronous-unwind-tables
+-optflags: i586 %{__global_cflags} -m32 -march=i586 -mtune=generic -fasynchronous-unwind-tables
+-optflags: i686 %{__global_cflags} -m32 -march=x86-64 -mtune=generic -mfpmath=sse -fasynchronous-unwind-tables
+-optflags: athlon %{__global_cflags} -m32 -march=athlon -fasynchronous-unwind-tables
++optflags: i386 %{__global_cflags} -m32 -march=i386 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection
++optflags: i486 %{__global_cflags} -m32 -march=i486 -fasynchronous-unwind-tables -fstack-clash-protection
++optflags: i586 %{__global_cflags} -m32 -march=i586 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection
++optflags: i686 %{__global_cflags} -m32 -march=x86-64 -mtune=generic -msse2 -mfpmath=sse -mstackrealign -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection
++optflags: athlon %{__global_cflags} -m32 -march=athlon -fasynchronous-unwind-tables -fstack-clash-protection
+ optflags: ia64 %{__global_cflags}
+-optflags: x86_64 %{__global_cflags} -m64 -mtune=generic
++optflags: x86_64 %{__global_cflags} -m64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection
+ 
+ optflags: alpha %{__global_cflags} -mieee
+ optflags: alphaev5 %{__global_cflags} -mieee -mcpu=ev5

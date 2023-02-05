@@ -1,0 +1,28 @@
+diff --git a/modules.d/98systemd/module-setup.sh b/modules.d/98systemd/module-setup.sh
+index c59cb94..f8f3582 100755
+--- a/modules.d/98systemd/module-setup.sh
++++ b/modules.d/98systemd/module-setup.sh
+@@ -175,13 +175,17 @@ install() {
+             /etc/hostname \
+             /etc/machine-id \
+             /etc/vconsole.conf \
+-            /etc/locale.conf \
+-            /etc/modules-load.d/*.conf \
+-            /etc/sysctl.d/*.conf \
+-            /etc/sysctl.conf
++            /etc/locale.conf
+ 
+-        _mods=$(modules_load_get /etc/modules-load.d)
+-        [[ $_mods ]] && hostonly='' instmods $_mods
++# Remove custom configurations sysctl.conf & sysctl.d/* & 
++# modules-load.d/* from initramfs. The custom configurations 
++# will also be applied after normal boot.
++            # /etc/modules-load.d/*.conf \
++            # /etc/sysctl.d/*.conf \
++            # /etc/sysctl.conf
++
++        # _mods=$(modules_load_get /etc/modules-load.d)
++        # [[ $_mods ]] && hostonly='' instmods $_mods
+     fi
+ 
+     if ! [[ -e "$initdir/etc/machine-id" ]]; then

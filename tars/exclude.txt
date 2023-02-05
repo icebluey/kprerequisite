@@ -1,0 +1,12 @@
+# To exclude multiple packages edit /etc/yum.conf file.
+#exclude=kernel* redhat-release*
+# To exclude 32 bit packages edit /etc/yum.conf file.
+#exclude=*.i?86 *.i686
+# Temporary exclude solution via Command line:
+#yum update --exclude=PACKAGENAME
+#yum update --exclude=kernel*
+#yum update --exclude=gcc,php
+#yum update --exclude=gcc* --exclude=php*
+
+exclude=iproute* wget*
+
